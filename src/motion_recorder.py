@@ -14,6 +14,7 @@ robot_yamel = "/home/pi/catkin_ws/src/dynamixel-workbench/dynamixel_workbench_co
 seq_list = []
 motor_name_id = {}
 names = []
+last_joint_state = None
 last_trajectory = None
 is_first_message = True
 last_dynamixel_state = None
@@ -39,11 +40,26 @@ def write_motion_file_header(names_data):
         f.write("motion:\n")
 
 
+def is_motion_a_noise(data):
+    global last_joint_state
+    if last_joint_state is not None:
+        for i, position in enumerate(list(data.position)):
+            if abs(last_joint_state.position[i] - position) > (
+                (data.header.stamp.to_sec() - last_joint_state.header.stamp.to_sec())
+                * 6
+            ):
+                return True
+
+
 def add_motion_to_motion_file(data):
     global recorded_motion_file_dir
     global start_time
     global seq_list
     global last_trajectory
+    global last_joint_state
+
+    if is_motion_a_noise(data):
+        return
 
     with open(recorded_motion_file_dir, "a") as f:
         f.write(f"  M{data.header.seq}:\n")
@@ -58,6 +74,7 @@ def add_motion_to_motion_file(data):
     sys.stdout.flush()
     sys.stdout.flush()
     last_trajectory = data.position
+    last_joint_state = data
 
 
 def on_joint_state_message(message):
