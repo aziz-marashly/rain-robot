@@ -9,7 +9,7 @@ from dynamixel_workbench_msgs.srv import DynamixelCommand, DynamixelCommandReque
 from sensor_msgs.msg import JointState
 
 recorded_motion_file_dir = "/home/pi/catkin_ws/src/dynamixel-workbench/dynamixel_workbench_operators/config/motion.yaml"
-robot_yamel = "/home/pi/catkin_ws/src/dynamixel-workbench/dynamixel_workbench_controllers/config/rio.yaml"
+robot_yamel = rospy.get_param("/dynamixel_info")
 
 seq_list = []
 motor_name_id = {}
@@ -51,33 +51,62 @@ def is_motion_a_noise(data):
                 return True
 
 
+def write_point_to_yamel_file(data):
+    global last_trajectory
+    global last_joint_state
+
+    if (data.header.stamp - last_joint_state.header.stamp).to_sec() == 0:
+        return
+
+    acceleration = []
+    for i, v in enumerate(data.velocity):
+        acceleration.append(
+            (
+                (v - last_joint_state.velocity[i])
+                / (data.header.stamp - last_joint_state.header.stamp).to_sec()
+            )
+        )
+    with open(recorded_motion_file_dir, "a") as f:
+        f.write(f"  M{data.header.seq}:\n")
+        f.write(f"    step: {list(data.position)}\n")
+        f.write(f"    effort: {list(data.effort)}\n")
+        f.write(f"    velocity: {list(data.velocity)}\n")
+        f.write(f"    accelerations: {acceleration}\n")
+        f.write(f"    time_from_start: {(data.header.stamp - start_time).to_sec()}\n")
+        seq_list.append(f"M{data.header.seq}")
+    sys.stdout.write(
+        f"\r position num {len(seq_list)+1} {list(data.position)} after {(data.header.stamp - start_time).to_sec()}\n"
+    )
+    sys.stdout.flush()
+    last_trajectory = data.position
+    last_joint_state = data
+    return last_joint_state
+
+
 def add_motion_to_motion_file(data):
     global recorded_motion_file_dir
     global start_time
     global seq_list
     global last_trajectory
     global last_joint_state
+    global minimum_time
 
-    if is_motion_a_noise(data):
+    if last_joint_state is None or last_trajectory is None:
+        last_joint_state = data
+        last_trajectory = data.position
         return
 
-    with open(recorded_motion_file_dir, "a") as f:
-        f.write(f"  M{data.header.seq}:\n")
-        f.write(f"    step: {list(data.position)}\n")
-        f.write(f"    effort: {list(data.effort)}\n")
-        f.write(f"    velocity: {list(data.velocity)}\n")
-        f.write(f"    time_from_start: {(data.header.stamp - start_time).to_sec()}\n")
-        seq_list.append(f"M{data.header.seq}")
-    sys.stdout.write(
-        f"\r position num {len(seq_list)+1} {list(data.position)} after {(data.header.stamp - start_time).to_sec()}"
-    )
-    sys.stdout.flush()
-    sys.stdout.flush()
-    last_trajectory = data.position
-    last_joint_state = data
+    if is_motion_a_noise(data):
+        print(f"seq {data.header.seq} is FFF noise\n")
+        return
+
+    last_joint_state = write_point_to_yamel_file(data)
+
+    print(f"last_joint_state {last_joint_state.header.seq}\n")
 
 
 def on_joint_state_message(message):
+    print(f"getting new message with seq {message.header.seq} \n")
     global is_first_message
 
     if is_first_message:
@@ -140,7 +169,6 @@ def reset_goal_position_to_current_position():
                 ),
                 None,
             ).present_position
-            print(goal_position)
             resp1 = dynamixel_command(
                 DynamixelCommandRequest("", motor_id, "Goal_Position", goal_position)
             )
