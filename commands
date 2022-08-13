@@ -1,0 +1,5 @@
+roslaunch dynamixel_workbench_controllers dynamixel_controllers.launch
+rosrun rain_controller motion_recorder.py
+rosrun rain_controller motion_waypoints_detector.py
+roslaunch dynamixel_workbench_operators joint_operator.launch
+rosservice call /dynamixel_workbench/execution "{}"

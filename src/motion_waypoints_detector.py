@@ -7,9 +7,9 @@ from scipy.interpolate import UnivariateSpline  # for interpolation
 recorded_motion_file_dir = "/home/pi/catkin_ws/src/dynamixel-workbench/dynamixel_workbench_operators/config/motion.yaml"
 joint_names = []
 # get current working directory
-time_slicing_period = 0.085
-playback_speed = 1
-smoothing_factor = 0.5
+time_slicing_period = 0.086
+playback_speed = 0.75
+smoothing_factor = 0.005
 
 
 def open_yaml():
@@ -41,9 +41,9 @@ def yaser():
     for j, point in enumerate(data["motion"]["names"]):
         for i, motion in enumerate(data["motion"][point]["step"]):
             points[i].append(motion)
-            times[i].append(data["motion"][point]["time_from_start"])
+            times[i].append(data["motion"][point]["time_from_start"] / playback_speed)
     for i, name in enumerate(joint_names):
-        position = UnivariateSpline(times[i], points[i], k=4, s=1)
+        position = UnivariateSpline(times[i], points[i], k=4, s=smoothing_factor)
         velocity = position.derivative()
         acceleration = velocity.derivative()
         positions.append(position)
