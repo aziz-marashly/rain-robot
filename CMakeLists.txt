@@ -164,7 +164,7 @@ include_directories(
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
 
-catkin_install_python(PROGRAMS src/talker.py src/motion_recorder.py src/critical_torque_determinator.py src/motion_gap_filler.py
+catkin_install_python(PROGRAMS src/talker.py src/motion_recorder.py src/critical_torque_determinator.py src/motion_gap_filler.py src/motion_waypoints_detector.py src/motion_plotter.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 ## Mark executables for installation

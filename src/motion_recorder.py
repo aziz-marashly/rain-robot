@@ -8,7 +8,7 @@ from dynamixel_workbench_msgs.msg import DynamixelStateList
 from dynamixel_workbench_msgs.srv import DynamixelCommand, DynamixelCommandRequest
 from sensor_msgs.msg import JointState
 
-recorded_motion_file_dir = "/home/pi/catkin_ws/src/dynamixel-workbench/dynamixel_workbench_operators/config/motion.yaml"
+recorded_motion_file_dir = "/home/pi/catkin_ws/src/dynamixel-workbench/dynamixel_workbench_operators/config/motion.yaml.base"
 robot_yamel = rospy.get_param("/dynamixel_info")
 
 seq_list = []

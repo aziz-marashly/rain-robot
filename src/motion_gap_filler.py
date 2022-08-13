@@ -4,7 +4,7 @@ import os
 import yaml
 
 recorded_motion_file_dir = "/home/pi/catkin_ws/src/dynamixel-workbench/dynamixel_workbench_operators/config/motion.yaml"
-minimum_time = 0.05
+minimum_time = 0.085
 motion_data = None
 new_motion_motion_data = {}
 
